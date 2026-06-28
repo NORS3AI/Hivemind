@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hivemind · 5-person AI council</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="masthead">
+        <div class="logo">HM<span>.AI</span></div>
+        <div class="masthead-text">
+          <h1>Hivemind</h1>
+          <p>Five sharp, single-minded advisors debate — then give you one answer.</p>
+        </div>
+      </header>
+
+      <section class="ask">
+        <label class="ask-label">&gt; ASK THE COUNCIL</label>
+        <textarea
+          id="question"
+          rows="3"
+          placeholder="Paste your question or decision here…"
+        ></textarea>
+        <button id="ask-btn">Convene the council</button>
+        <div id="error" class="error" hidden></div>
+      </section>
+
+      <section class="advisors" id="advisors" hidden>
+        <h2 class="section-label">The Council</h2>
+        <div class="advisor-grid" id="advisor-grid"></div>
+      </section>
+
+      <section class="verdict" id="verdict" hidden>
+        <h2 class="section-label">Final Answer</h2>
+        <div class="verdict-body" id="verdict-body"></div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
