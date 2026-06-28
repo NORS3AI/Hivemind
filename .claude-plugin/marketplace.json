@@ -1,0 +1,15 @@
+{
+  "name": "nors3ai",
+  "owner": {
+    "name": "nors3ai"
+  },
+  "description": "Plugins from the Hivemind repo.",
+  "plugins": [
+    {
+      "name": "hivemind",
+      "source": "./plugins/hivemind",
+      "description": "Turn Claude into a 5-person advisory council that debates your question, then gives one final answer.",
+      "keywords": ["council", "advisors", "decision", "brainstorm", "perspectives"]
+    }
+  ]
+}
