@@ -38,7 +38,28 @@ synthesis pass that streams its answer back token by token.
 - **Model** — defaults to `claude-opus-4-8`; advisors answer directly, the Chair
   uses adaptive thinking at high effort. Override with `HIVEMIND_MODEL`.
 
-## Setup
+## Run it inside Claude (plugin)
+
+Prefer no app and no API key? Install the Hivemind as a **Claude Code plugin** and
+run the council directly inside any Claude session:
+
+```bash
+/plugin marketplace add nors3ai/hivemind
+/plugin install hivemind@nors3ai
+```
+
+Then ask the council:
+
+```bash
+/council Should we launch on Friday or wait a week?
+```
+
+Claude itself plays all five advisors and the Chair — Strategist, Skeptic, Creative,
+Operator, and Audience Advocate weigh in, then you get one final answer with next
+steps. The bundled `council` skill also lets Claude convene the council on its own
+when you ask for "multiple perspectives" or to "ask the hivemind" about a decision.
+
+## Run it as a web app
 
 Requires Python 3.10+.
 

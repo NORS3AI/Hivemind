@@ -1,0 +1,10 @@
+{
+  "name": "hivemind",
+  "displayName": "Hivemind",
+  "description": "Turn Claude into a 5-person advisory council — Strategist, Skeptic, Creative, Operator, and Audience Advocate — that debates your question, then delivers one final answer with clear next steps.",
+  "version": "1.0.0",
+  "author": {
+    "name": "nors3ai"
+  },
+  "keywords": ["council", "advisors", "decision", "brainstorm", "perspectives"]
+}
