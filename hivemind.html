@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hivemind · 5-person AI council</title>
+<style>
+  :root {
+    --bg: #0a0a12; --panel: #12121f; --panel-2: #171728; --border: #262640;
+    --text: #e8e8f2; --muted: #8a8aa8; --accent: #7c6cf0; --accent-soft: #2a2550;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text);
+    background: radial-gradient(circle at 50% -10%, #181830 0%, var(--bg) 55%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+  .app { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+  .masthead { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .logo {
+    flex: none; width: 56px; height: 56px; border-radius: 50%;
+    border: 1px solid var(--accent); display: grid; place-items: center;
+    font-family: var(--mono); font-weight: 700; font-size: 15px;
+    letter-spacing: .5px; background: var(--accent-soft);
+  }
+  .logo span { color: var(--accent); }
+  .masthead-text h1 { margin: 0; font-size: 26px; letter-spacing: -.5px; }
+  .masthead-text p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+  details.settings {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 4px 16px; margin-bottom: 16px;
+  }
+  details.settings summary {
+    cursor: pointer; padding: 12px 0; font-size: 13px; color: var(--muted);
+    list-style: none;
+  }
+  details.settings summary::-webkit-details-marker { display: none; }
+  details.settings summary::before { content: "⚙ "; }
+  .settings-grid { display: grid; gap: 12px; padding: 4px 0 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .field input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: var(--mono);
+    font-size: 13px; padding: 9px 11px;
+  }
+  .field input:focus { outline: none; border-color: var(--accent); }
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .hint a { color: var(--accent); }
+
+  .ask { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .ask-label { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--accent); margin-bottom: 10px; }
+  textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--mono);
+    font-size: 14px; line-height: 1.6; padding: 12px 14px; resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  button {
+    margin-top: 12px; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 11px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: opacity .15s, transform .05s;
+  }
+  button:hover { opacity: .92; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .error {
+    margin-top: 12px; padding: 10px 14px; border-radius: 8px;
+    background: #3a1620; border: 1px solid #6b2435; color: #ffb3c0; font-size: 13px;
+  }
+  .section-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin: 36px 0 14px; }
+  .advisor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-height: 120px; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .card-name { font-weight: 700; font-size: 15px; }
+  .card-tag { font-size: 11px; color: var(--muted); text-align: right; }
+  .card-body { font-size: 13.5px; line-height: 1.6; color: #d2d2e4; }
+  .card-body ul { margin: 6px 0; padding-left: 18px; }
+  .card-body li { margin: 3px 0; }
+  .card.failed .card-body { color: #ffb3c0; }
+
+  .thinking { display: inline-flex; gap: 4px; color: var(--accent); }
+  .thinking span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.2s infinite ease-in-out; }
+  .thinking span:nth-child(2) { animation-delay: .2s; }
+  .thinking span:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,80%,100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+
+  .verdict-body {
+    background: linear-gradient(180deg, var(--accent-soft) 0%, var(--panel) 60%);
+    border: 1px solid var(--accent); border-radius: 14px; padding: 22px;
+    font-size: 15px; line-height: 1.7;
+  }
+  .verdict-body h3 { font-size: 16px; margin: 18px 0 8px; color: #cfc8ff; }
+  .verdict-body h4 { font-size: 14px; margin: 14px 0 6px; color: #cfc8ff; }
+  .verdict-body h3:first-child, .verdict-body h4:first-child { margin-top: 0; }
+  .verdict-body ul, .verdict-body ol { margin: 8px 0; padding-left: 22px; }
+  .verdict-body li { margin: 5px 0; }
+  .verdict-body code { font-family: var(--mono); font-size: 13px; background: #00000040; padding: 1px 5px; border-radius: 4px; }
+  .verdict-body strong { color: #fff; }
+  .cursor::after { content: "▍"; color: var(--accent); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="masthead">
+    <div class="logo">HM<span>.AI</span></div>
+    <div class="masthead-text">
+      <h1>Hivemind</h1>
+      <p>Five sharp, single-minded advisors debate — then give you one answer.</p>
+    </div>
+  </header>
+
+  <details class="settings" id="settings">
+    <summary>Settings — API key &amp; model</summary>
+    <div class="settings-grid">
+      <div class="field">
+        <label for="api-key">Anthropic API key</label>
+        <input id="api-key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <input id="model" type="text" value="claude-opus-4-8" spellcheck="false" />
+      </div>
+      <div class="hint">
+        Your key is stored only in this browser (localStorage) and sent directly to
+        <code>api.anthropic.com</code> — it never touches any other server. Get a key at
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a>.
+      </div>
+    </div>
+  </details>
+
+  <section class="ask">
+    <label class="ask-label">&gt; ASK THE COUNCIL</label>
+    <textarea id="question" rows="3" placeholder="Paste your question or decision here…"></textarea>
+    <button id="ask-btn">Convene the council</button>
+    <div id="error" class="error" hidden></div>
+  </section>
+
+  <section id="advisors" hidden>
+    <h2 class="section-label">The Council</h2>
+    <div class="advisor-grid" id="advisor-grid"></div>
+  </section>
+
+  <section id="verdict" hidden>
+    <h2 class="section-label">Final Answer</h2>
+    <div class="verdict-body" id="verdict-body"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+const API_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_VERSION = "2023-06-01";
+
+const ADVISORS = [
+  { key: "strategist", name: "Strategist", tagline: "long-term goals and smart direction",
+    lens: "the long game: where this should end up, the smartest direction to take, leverage, sequencing, and what compounds over time" },
+  { key: "skeptic", name: "Skeptic", tagline: "risks, weak assumptions, blind spots",
+    lens: "what could go wrong: shaky assumptions, hidden risks, blind spots, and the parts of the plan most likely to break" },
+  { key: "creative", name: "Creative", tagline: "fresh ideas and better angles",
+    lens: "fresh ideas and better angles: unconventional approaches, reframes, and options the obvious answer would miss" },
+  { key: "operator", name: "Operator", tagline: "practical steps and execution",
+    lens: "execution: the concrete steps to actually do this, what to do first, and how to make it real without overcomplicating it" },
+  { key: "audience", name: "Audience Advocate", tagline: "what the user / customer / viewer needs",
+    lens: "the audience: what the end user, customer, or viewer actually needs, feels, and will respond to" },
+];
+
+function advisorSystem(a) {
+  return `You are the ${a.name}, one of five advisors on the Hivemind council. ` +
+    `Your lens is ${a.lens}.\n\n` +
+    `Give a short, sharp view on the user's request from YOUR perspective only — ` +
+    `2 to 4 sentences or a few tight bullet points. Be specific and opinionated; ` +
+    `surface the one or two things someone with your lens would insist on. Do not ` +
+    `cover the other advisors' angles, and do not give a final overall recommendation — that is the Chair's job.`;
+}
+
+const CHAIR_SYSTEM =
+  "You are the Chair of the Hivemind — a council of five advisors (Strategist, " +
+  "Skeptic, Creative, Operator, and Audience Advocate). You receive the user's " +
+  "question and each advisor's short view.\n\n" +
+  "Your job: synthesize them into one answer. First, in a couple of lines, note " +
+  "where the advisors agree and where they genuinely disagree. Then deliver ONE " +
+  "final, practical answer with clear, concrete next steps. Be decisive — pick a " +
+  "direction rather than listing every option. Use short markdown sections and keep it tight.";
+
+// --- DOM ---
+const $ = (id) => document.getElementById(id);
+const questionEl = $("question"), askBtn = $("ask-btn"), errorEl = $("error");
+const advisorsEl = $("advisors"), advisorGrid = $("advisor-grid");
+const verdictEl = $("verdict"), verdictBody = $("verdict-body");
+const keyEl = $("api-key"), modelEl = $("model"), settingsEl = $("settings");
+
+// Persist key + model locally.
+keyEl.value = localStorage.getItem("hivemind_key") || "";
+modelEl.value = localStorage.getItem("hivemind_model") || "claude-opus-4-8";
+keyEl.addEventListener("change", () => localStorage.setItem("hivemind_key", keyEl.value.trim()));
+modelEl.addEventListener("change", () => localStorage.setItem("hivemind_model", modelEl.value.trim()));
+
+askBtn.addEventListener("click", convene);
+questionEl.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") convene();
+});
+
+function headers() {
+  return {
+    "content-type": "application/json",
+    "x-api-key": keyEl.value.trim(),
+    "anthropic-version": ANTHROPIC_VERSION,
+    "anthropic-dangerous-direct-browser-access": "true",
+  };
+}
+function model() { return modelEl.value.trim() || "claude-opus-4-8"; }
+
+async function apiError(res) {
+  let detail = `HTTP ${res.status}`;
+  try {
+    const j = await res.json();
+    if (j && j.error && j.error.message) detail = j.error.message;
+  } catch {}
+  return new Error(detail);
+}
+
+async function convene() {
+  const question = questionEl.value.trim();
+  if (!keyEl.value.trim()) {
+    showError("Add your Anthropic API key in Settings first.");
+    settingsEl.open = true;
+    return;
+  }
+  if (!question) { showError("Enter a question for the council first."); return; }
+
+  hideError();
+  setBusy(true);
+  resetOutput();
+
+  // Render the five advisor cards immediately.
+  advisorsEl.hidden = false;
+  for (const a of ADVISORS) addAdvisorCard(a);
+
+  try {
+    // Fan out to all five advisors in parallel; fill each card as it returns.
+    const views = {};
+    await Promise.all(ADVISORS.map(async (a) => {
+      try {
+        const view = await advisorView(a, question);
+        views[a.key] = view;
+        fillAdvisorCard(a.key, view);
+      } catch (err) {
+        views[a.key] = "(no usable response)";
+        failAdvisorCard(a.key, err.message);
+      }
+    }));
+
+    // The Chair synthesizes, streamed.
+    verdictEl.hidden = false;
+    verdictBody.classList.add("cursor");
+    await synthesize(question, views);
+  } catch (err) {
+    showError(err.message || "Something went wrong.");
+  } finally {
+    setBusy(false);
+    verdictBody.classList.remove("cursor");
+  }
+}
+
+async function advisorView(a, question) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      model: model(),
+      max_tokens: 1024,
+      system: advisorSystem(a),
+      messages: [{ role: "user", content: question }],
+    }),
+  });
+  if (!res.ok) throw await apiError(res);
+  const data = await res.json();
+  return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+}
+
+function chairPrompt(question, views) {
+  let p = `The user asked the Hivemind council:\n\n"""\n${question}\n"""\n\n` +
+          `Here are the five advisors' views:\n\n`;
+  for (const a of ADVISORS) {
+    p += `## ${a.name} (${a.tagline})\n${views[a.key] || "(no response)"}\n\n`;
+  }
+  p += "Now, as Chair, synthesize these into the council's answer: briefly " +
+       "highlight the key agreements and disagreements, then give one final " +
+       "practical answer with clear next steps.";
+  return p;
+}
+
+async function synthesize(question, views) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      model: model(),
+      max_tokens: 4096,
+      stream: true,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "high" },
+      system: CHAIR_SYSTEM,
+      messages: [{ role: "user", content: chairPrompt(question, views) }],
+    }),
+  });
+  if (!res.ok || !res.body) throw await apiError(res);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "", text = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep;
+    while ((sep = buffer.indexOf("\n\n")) >= 0) {
+      const raw = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const evt = parseSSE(raw);
+      if (!evt) continue;
+      if (evt.type === "content_block_delta" && evt.delta && evt.delta.type === "text_delta") {
+        text += evt.delta.text;
+        verdictBody.innerHTML = mdToHtml(text);
+        verdictBody.classList.add("cursor");
+      } else if (evt.type === "error") {
+        throw new Error((evt.error && evt.error.message) || "stream error");
+      }
+    }
+  }
+}
+
+function parseSSE(raw) {
+  const dataLines = [];
+  for (const line of raw.split("\n")) {
+    if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+  }
+  if (!dataLines.length) return null;
+  const payload = dataLines.join("\n");
+  if (payload === "[DONE]") return null;
+  try { return JSON.parse(payload); } catch { return null; }
+}
+
+// --- UI helpers ---
+function addAdvisorCard(a) {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.id = "card-" + a.key;
+  card.innerHTML =
+    `<div class="card-head"><div class="card-name">${escapeHtml(a.name)}</div>` +
+    `<div class="card-tag">${escapeHtml(a.tagline)}</div></div>` +
+    `<div class="card-body"><span class="thinking"><span></span><span></span><span></span></span></div>`;
+  advisorGrid.appendChild(card);
+}
+function fillAdvisorCard(key, view) {
+  const card = $("card-" + key);
+  if (card) card.querySelector(".card-body").innerHTML = mdToHtml(view);
+}
+function failAdvisorCard(key, msg) {
+  const card = $("card-" + key);
+  if (card) { card.classList.add("failed"); card.querySelector(".card-body").textContent = msg; }
+}
+function resetOutput() {
+  advisorGrid.innerHTML = "";
+  advisorsEl.hidden = true;
+  verdictEl.hidden = true;
+  verdictBody.innerHTML = "";
+}
+function setBusy(b) {
+  askBtn.disabled = b;
+  askBtn.textContent = b ? "Deliberating…" : "Convene the council";
+}
+function showError(m) { errorEl.textContent = m; errorEl.hidden = false; }
+function hideError() { errorEl.hidden = true; }
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Minimal markdown: headings, lists, bold/italic/code.
+function mdToHtml(md) {
+  const lines = md.split("\n");
+  let html = "", listType = null;
+  const closeList = () => { if (listType) { html += `</${listType}>`; listType = null; } };
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/\s+$/, "");
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    if (heading) {
+      closeList();
+      const level = Math.min(heading[1].length + 2, 4);
+      html += `<h${level}>${inline(heading[2])}</h${level}>`;
+    } else if (bullet) {
+      if (listType !== "ul") { closeList(); html += "<ul>"; listType = "ul"; }
+      html += `<li>${inline(bullet[1])}</li>`;
+    } else if (numbered) {
+      if (listType !== "ol") { closeList(); html += "<ol>"; listType = "ol"; }
+      html += `<li>${inline(numbered[1])}</li>`;
+    } else if (line.trim() === "") {
+      closeList();
+    } else {
+      closeList();
+      html += `<p>${inline(line)}</p>`;
+    }
+  }
+  closeList();
+  return html;
+}
+function inline(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*(?!\s)(.+?)\*/g, "$1<em>$2</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>");
+}
+</script>
+</body>
+</html>
